@@ -1431,8 +1431,10 @@ also set DB's dialect.  FILE's modification time is stored in DB,
 unless IGNORE-MODTIME is non-nil.  If NOT-AS-DEPENDENT is
 non-nil, load FILE as a normal database, even if it is a
 dependent database."
-  (with-temp-buffer
-    (insert-file-contents file)
+  (with-current-buffer (or (find-buffer-visiting file)
+                           (find-file-noselect file))
+    (when ebib-use-read-only-buffer
+      (read-only-mode 1))
     (unless ignore-modtime
       (ebib-db-set-modtime (ebib--get-file-modtime file) db))
     (if (and (not not-as-dependent)
