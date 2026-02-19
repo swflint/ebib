@@ -2165,6 +2165,13 @@ Honour `ebib-create-backups' and BACKUP-DIRECTORY-ALIST."
       (mapc (lambda (key) (ebib--format-entry key db nil)) sorted-list))
     (ebib--format-local-vars db)))
 
+(defcustom ebib-use-read-only-buffer t
+  "When opening bibliographies, use a read-only buffer.
+If non-nil, ebib-created buffers containing bibliographies will have
+`read-only-mode' enabled."
+  :group 'ebib
+  :type 'boolean)
+
 (defun ebib--save-database (db &optional force)
   "Save the database DB.
 The FORCE argument is used as in `ebib-save-current-database'."
@@ -2188,9 +2195,12 @@ The FORCE argument is used as in `ebib-save-current-database'."
   ;; Now save the database.
   (with-current-buffer (or (find-buffer-visiting (ebib-db-get-filename db))
                            (find-file-noselect (ebib-db-get-filename db)))
+    (read-only-mode 0)
     (erase-buffer)
     (ebib--format-database-as-bibtex db)
-    (basic-save-buffer))
+    (basic-save-buffer)
+    (when ebib-use-read-only-buffer
+      (read-only-mode 1)))
   (ebib--set-modified nil db))
 
 (defun ebib-write-database (force)
@@ -2210,9 +2220,12 @@ unconditionally, even if the new file already exists."
                    (y-or-n-p (format (format "File %s already exists; overwrite? " new-filename))))
            (with-current-buffer (or (find-buffer-visiting new-file-name)
                                     (find-file-noselect new-file-name))
+             (read-only-mode 0)
              (erase-buffer)
              (ebib--format-database-as-bibtex ebib--cur-db)
-             (basic-save-buffer))
+             (basic-save-buffer)
+             (when ebib-use-read-only-buffer
+               (read-only-mode 1)))
            (if (ebib-db-get-filter ebib--cur-db)
                (message "Wrote filtered entries as new database to %s" new-filename)
              ;; If this wasn't a filtered db, we rename it.
